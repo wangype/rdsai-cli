@@ -349,5 +349,6 @@ def history(app: ShellREPL, args: list[str]):
     # Get recent queries and convert to dict format
     entries = app.query_history.get_recent_queries(limit)
     history_data = [entry.to_dict() for entry in entries]
+    statistics = app.query_history.get_statistics()
 
-    HistoryFormatter.format_history(history_data, limit)
+    HistoryFormatter.format_history(history_data, limit, statistics=statistics)

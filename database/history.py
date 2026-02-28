@@ -20,6 +20,8 @@ class QueryHistoryEntry:
     execution_time: float | None = None
     affected_rows: int | None = None
     error_message: str | None = None
+    row_count: int | None = None
+    database: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
@@ -27,14 +29,25 @@ class QueryHistoryEntry:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> QueryHistoryEntry:
-        """Create from dictionary representation."""
-        return cls(**data)
+        """Create from dictionary representation, ignoring unknown fields for forward compatibility."""
+        valid_fields = {
+            "timestamp",
+            "sql",
+            "status",
+            "execution_time",
+            "affected_rows",
+            "error_message",
+            "row_count",
+            "database",
+        }
+        filtered = {k: v for k, v in data.items() if k in valid_fields}
+        return cls(**filtered)
 
 
 class QueryHistory:
     """Manages SQL query execution history using deque for efficient operations."""
 
-    def __init__(self, max_entries: int = 100):
+    def __init__(self, max_entries: int = 500):
         self._entries: deque[QueryHistoryEntry] = deque(maxlen=max_entries)
         self._max_entries = max_entries
 
@@ -45,6 +58,8 @@ class QueryHistory:
         execution_time: float | None = None,
         affected_rows: int | None = None,
         error_message: str | None = None,
+        row_count: int | None = None,
+        database: str | None = None,
     ) -> None:
         """Record a query execution in history."""
         entry = QueryHistoryEntry(
@@ -54,6 +69,8 @@ class QueryHistory:
             execution_time=execution_time,
             affected_rows=affected_rows,
             error_message=error_message,
+            row_count=row_count,
+            database=database,
         )
         self._entries.append(entry)
         logger.debug(f"Recorded query in history: {sql[:50]}...")

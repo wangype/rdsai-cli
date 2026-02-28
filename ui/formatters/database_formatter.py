@@ -478,32 +478,95 @@ class HistoryFormatter:
     """Formats SQL execution history."""
 
     @staticmethod
-    def format_history(history_entries: list[dict[str, Any]], limit: int = 10) -> None:
-        """Display SQL execution history."""
+    def _format_execution_time(seconds: float | None) -> str:
+        if seconds is None:
+            return "-"
+        if seconds < 0.001:
+            return f"{seconds * 1_000_000:.0f}µs"
+        if seconds < 1:
+            return f"{seconds * 1000:.1f}ms"
+        return f"{seconds:.2f}s"
+
+    @staticmethod
+    def _format_rows_info(entry: dict[str, Any]) -> str:
+        row_count = entry.get("row_count")
+        affected_rows = entry.get("affected_rows")
+        if row_count is not None and row_count > 0:
+            return f"{row_count} rows"
+        if affected_rows is not None and affected_rows > 0:
+            return f"{affected_rows} affected"
+        return "-"
+
+    @staticmethod
+    def format_history(
+        history_entries: list[dict[str, Any]],
+        limit: int = 10,
+        statistics: dict[str, Any] | None = None,
+    ) -> None:
+        """Display SQL execution history with execution details."""
         if not history_entries:
             console.print("[yellow]No SQL history available.[/yellow]")
             return
 
-        table = Table(title=f"Recent SQL History (last {len(history_entries)} entries)")
-        table.add_column("#", style="dim", width=3)
-        table.add_column("Timestamp", style="cyan", width=19)
-        table.add_column("SQL", style="white")
-        table.add_column("Status", style="green", width=8)
+        table = Table(
+            title=f"SQL History (last {len(history_entries)} entries)",
+            show_lines=True,
+            padding=(0, 1),
+        )
+        table.add_column("#", style="dim", width=4, justify="right")
+        table.add_column("Time", style="cyan", width=19)
+        table.add_column("Database", style="magenta", width=14, overflow="ellipsis", no_wrap=True)
+        table.add_column("SQL", style="white", min_width=30, max_width=120)
+        table.add_column("Status", width=7, justify="center")
+        table.add_column("Duration", style="yellow", width=9, justify="right")
+        table.add_column("Rows", style="blue", width=12, justify="right")
 
         for i, entry in enumerate(reversed(history_entries), 1):
             sql = entry.get("sql", "")
-            truncated_sql = sql[:80] + ("..." if len(sql) > 80 else "")
+            truncated_sql = sql[:200] + ("..." if len(sql) > 200 else "")
 
-            status_style = "green" if entry.get("status") == "success" else "red"
+            is_success = entry.get("status") == "success"
+            status_text = Text("✓ OK", style="green") if is_success else Text("✗ ERR", style="red")
+
+            db_name = entry.get("database") or "-"
+            duration = HistoryFormatter._format_execution_time(entry.get("execution_time"))
+            rows_info = HistoryFormatter._format_rows_info(entry)
+
+            error_msg = entry.get("error_message")
+            if not is_success and error_msg:
+                truncated_err = error_msg[:120] + ("..." if len(error_msg) > 120 else "")
+                sql_display = f"{truncated_sql}\n[red italic]{truncated_err}[/red italic]"
+            else:
+                sql_display = truncated_sql
 
             table.add_row(
-                str(i),
-                entry.get("timestamp", "Unknown"),
-                truncated_sql,
-                Text(entry.get("status", "Unknown"), style=status_style),
+                str(i), entry.get("timestamp", "Unknown"), db_name, sql_display, status_text, duration, rows_info
             )
 
         console.print(table)
+
+        if statistics:
+            HistoryFormatter._print_statistics(statistics)
+
+    @staticmethod
+    def _print_statistics(stats: dict[str, Any]) -> None:
+        total = stats.get("total_queries", 0)
+        if total == 0:
+            return
+        success = stats.get("successful_queries", 0)
+        failed = stats.get("failed_queries", 0)
+        rate = stats.get("success_rate", 0.0)
+        avg_time = stats.get("average_execution_time")
+
+        parts = [
+            f"[bold]Total:[/bold] {total}",
+            f"[green]Success:[/green] {success}",
+            f"[red]Failed:[/red] {failed}",
+            f"[bold]Rate:[/bold] {rate:.1f}%",
+        ]
+        if avg_time is not None:
+            parts.append(f"[yellow]Avg time:[/yellow] {HistoryFormatter._format_execution_time(avg_time)}")
+        console.print("  ".join(parts))
 
 
 class ErrorFormatter:

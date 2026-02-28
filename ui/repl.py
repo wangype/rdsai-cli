@@ -535,6 +535,7 @@ class ShellREPL:
 
         # Record history
         if self._query_history:
+            current_db = db_svc.get_current_database() if db_svc and db_svc.is_connected() else None
             if result:
                 status = "success" if result.success else "error"
                 self._query_history.record_query(
@@ -543,10 +544,17 @@ class ShellREPL:
                     execution_time=result.execution_time,
                     affected_rows=result.affected_rows,
                     error_message=result.error,
+                    row_count=result.row_count,
+                    database=current_db,
                 )
             else:
                 error_msg = str(error) if error else "Unknown error"
-                self._query_history.record_query(sql, "error", error_message=error_msg)
+                self._query_history.record_query(
+                    sql=sql,
+                    status="error",
+                    error_message=error_msg,
+                    database=current_db,
+                )
 
     def _handle_transaction_control(self, tx_type: Any) -> None:
         """Handle transaction control statements (BEGIN/COMMIT/ROLLBACK)."""
