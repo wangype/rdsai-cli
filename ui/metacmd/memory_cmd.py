@@ -30,7 +30,9 @@ def _memory_subcommand_completer(args: list[str]) -> list[str]:
     subcommands=[
         SubCommand(name="status", aliases=[], description="Show persistent memory status"),
         SubCommand(name="search", aliases=[], description="Search SQL and conversation memory"),
-        SubCommand(name="clear", aliases=[], description="Clear persistent memory", arg_completer=_memory_subcommand_completer),
+        SubCommand(
+            name="clear", aliases=[], description="Clear persistent memory", arg_completer=_memory_subcommand_completer
+        ),
         SubCommand(name="export", aliases=[], description="Export persistent memory as JSON"),
     ],
 )

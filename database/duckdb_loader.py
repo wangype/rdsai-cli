@@ -14,7 +14,7 @@ from __future__ import annotations
 import os
 import time
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from urllib.parse import urlparse, unquote
 
@@ -29,7 +29,7 @@ LARGE_FILE_THRESHOLD = 1024 * 1024 * 1024  # 1GB
 # ========== URL Parser ==========
 
 
-class DuckDBProtocol(str, Enum):
+class DuckDBProtocol(StrEnum):
     """Supported DuckDB connection protocols."""
 
     FILE = "file"

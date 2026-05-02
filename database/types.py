@@ -7,14 +7,14 @@ avoiding circular import issues between service modules.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any
 
 
 # ========== Connection Status ==========
 
 
-class ConnectionStatus(str, Enum):
+class ConnectionStatus(StrEnum):
     """Database connection status enumeration."""
 
     CONNECTED = "connected"
@@ -22,7 +22,7 @@ class ConnectionStatus(str, Enum):
     FAILED = "failed"
 
 
-class QueryStatus(str, Enum):
+class QueryStatus(StrEnum):
     """Query execution status enumeration."""
 
     SUCCESS = "success"

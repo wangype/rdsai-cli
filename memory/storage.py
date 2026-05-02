@@ -201,9 +201,7 @@ class SQLiteMemoryStorage:
         """Return the latest session checkpoint, if any."""
         try:
             with self._connect() as conn:
-                row = conn.execute(
-                    "SELECT * FROM session_checkpoints ORDER BY timestamp DESC LIMIT 1"
-                ).fetchone()
+                row = conn.execute("SELECT * FROM session_checkpoints ORDER BY timestamp DESC LIMIT 1").fetchone()
         except sqlite3.Error as exc:
             logger.warning("Failed to load session checkpoint: {error}", error=exc)
             raise MemoryStorageError(str(exc)) from exc

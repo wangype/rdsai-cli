@@ -6,7 +6,7 @@ Simplified error handling with auto-classification based on MySQL error codes.
 from __future__ import annotations
 
 import re
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from utils.logging import logger
@@ -98,7 +98,7 @@ QUERY_ERROR_CODES: frozenset[int] = frozenset(
 # ========== Error Severity ==========
 
 
-class ErrorSeverity(str, Enum):
+class ErrorSeverity(StrEnum):
     """Error severity levels."""
 
     WARNING = "warning"
