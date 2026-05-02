@@ -18,6 +18,7 @@ from ui.metacmd import mcp  # noqa: F401
 from ui.metacmd import model  # noqa: F401
 from ui.metacmd import research  # noqa: F401
 from ui.metacmd import setup  # noqa: F401
+from ui.metacmd import skills  # noqa: F401
 
 __all__ = [
     "MetaCommand",

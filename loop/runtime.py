@@ -6,9 +6,10 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from config import Config
+from config import Config, get_share_dir
 from llm.llm import LLM
 from config import Session
+from loop.skills import SkillManager
 
 if TYPE_CHECKING:
     from tools.mcp.config import MCPConfig
@@ -35,6 +36,7 @@ class Runtime:
     session: Session
     builtin_args: BuiltinSystemPromptArgs
     mcp_config: MCPConfig | None = field(default=None)
+    skill_manager: SkillManager | None = field(default=None)
     yolo: bool = field(default=False)
 
     def set_llm(self, llm: LLM | None) -> None:
@@ -78,6 +80,7 @@ class Runtime:
             llm=llm,
             session=session,
             mcp_config=mcp_config,
+            skill_manager=SkillManager(get_share_dir() / "skills"),
             builtin_args=BuiltinSystemPromptArgs(
                 CLI_NOW=datetime.now().astimezone().isoformat(),
                 CLI_LANGUAGE=config.language,

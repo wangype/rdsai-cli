@@ -76,12 +76,15 @@ async def load_agent(
 
     # MCP tools are loaded asynchronously in the background via /mcp commands
     # or can be connected manually using /mcp connect <server>
-    return Agent(
+    agent = Agent(
         name=agent_spec.name,
         system_prompt=system_prompt,
         toolset=toolset,
         runtime=runtime,
     )
+    if runtime.skill_manager:
+        runtime.skill_manager.apply_to_agent(agent)
+    return agent
 
 
 def _load_system_prompt(path: Path, args: dict[str, str], builtin_args: BuiltinSystemPromptArgs) -> str:
