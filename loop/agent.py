@@ -7,13 +7,16 @@ import inspect
 import string
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from config import Config, Session
 from loop.agentspec import ResolvedAgentSpec, load_agent_spec
 from loop.runtime import BuiltinSystemPromptArgs, Runtime
 from loop.toolset import BaseTool, DynamicToolset
 from utils.logging import logger
+
+if TYPE_CHECKING:
+    from skills.manager import SkillsManager
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -35,12 +38,14 @@ class Agent:
 async def load_agent(
     agent_file: Path,
     runtime: Runtime,
+    skills_manager: SkillsManager | None = None,
 ) -> Agent:
     """Load agent from specification file.
 
     Args:
         agent_file: Path to the agent specification file.
         runtime: The runtime configuration (includes MCP config).
+        skills_manager: Skills manager for prompt injection. Defaults to runtime.skills_manager.
 
     Returns:
         Loaded Agent instance.
@@ -57,6 +62,7 @@ async def load_agent(
         agent_spec.system_prompt_args,
         runtime.builtin_args,
     )
+    system_prompt = _inject_skills(system_prompt, skills_manager or runtime.skills_manager)
 
     tool_deps = {
         ResolvedAgentSpec: agent_spec,
@@ -94,6 +100,18 @@ def _load_system_prompt(path: Path, args: dict[str, str], builtin_args: BuiltinS
         spec_args=args,
     )
     return string.Template(system_prompt).substitute(asdict(builtin_args), **args)
+
+
+def _inject_skills(system_prompt: str, skills_manager: SkillsManager | None) -> str:
+    if skills_manager is None:
+        return system_prompt
+
+    skills = skills_manager.list_enabled()
+    if not skills:
+        return system_prompt
+
+    skills_prompt = "\n".join(["# Available Skills", *[f"- {skill.summary()}" for skill in skills]])
+    return f"{system_prompt}\n\n{skills_prompt}"
 
 
 type ToolType = BaseTool[Any]

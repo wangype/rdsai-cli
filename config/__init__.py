@@ -6,6 +6,7 @@ This module provides unified access to all configuration-related classes and fun
 # Base configuration (constants, paths, session)
 from config.base import (
     get_config_file,
+    get_skills_dir,
     get_share_dir,
     Session,
     USER_AGENT,
@@ -35,6 +36,7 @@ from config.app import (
 __all__ = [
     # Base
     "get_config_file",
+    "get_skills_dir",
     "get_share_dir",
     "Session",
     "USER_AGENT",

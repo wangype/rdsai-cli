@@ -17,6 +17,7 @@ from loop.agent import load_agent
 from loop.agentspec import DEFAULT_AGENT_FILE
 from loop.neoloop import NeoLoop
 from loop.runtime import Runtime
+from skills import SkillsManager
 from tools.mcp.client import get_connection_pool, shutdown_connection_pool
 from utils.logging import StreamToLogger, logger
 
@@ -70,6 +71,8 @@ class Application:
         """
         config = load_config(config_file)
         logger.info("Loaded config: {config}", config=config)
+        skills_manager = SkillsManager(config, config_file=config_file)
+        skills_manager.discover_all()
 
         # Load MCP configuration from default path
         from tools.mcp.config import load_mcp_config
@@ -110,7 +113,14 @@ class Application:
             logger.info("Using LLM model: {model}", model=model)
             llm = create_llm(provider, model)
 
-        runtime = await Runtime.create(config, llm, session, mcp_config, yolo)
+        runtime = await Runtime.create(
+            config=config,
+            llm=llm,
+            session=session,
+            mcp_config=mcp_config,
+            skills_manager=skills_manager,
+            yolo=yolo,
+        )
         agent = await load_agent(DEFAULT_AGENT_FILE, runtime)
 
         # Create NeoLoop with LangGraph (no Context needed - uses checkpointer)

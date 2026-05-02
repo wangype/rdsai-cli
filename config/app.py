@@ -41,6 +41,7 @@ class Config(BaseModel):
     providers: dict[str, LLMProvider] = Field(default_factory=dict, description="List of LLM providers")
     services: Services = Field(default_factory=Services, description="Services configuration")
     language: str = Field(default="en", description="Language preference (en/zh)")
+    enabled_skills: list[str] = Field(default_factory=list, description="Enabled skills")
 
     # Embedding model configuration
     default_embedding_model: str = Field(default="", description="Default embedding model to use")

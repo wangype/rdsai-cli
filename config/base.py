@@ -69,6 +69,11 @@ def get_config_file() -> Path:
     return get_share_dir() / "config.json"
 
 
+def get_skills_dir() -> Path:
+    """Get the builtin skills directory path."""
+    return Path(__file__).parent.parent / "skills" / "builtin"
+
+
 # ========== Session Management ==========
 
 

@@ -11,6 +11,7 @@ from llm.llm import LLM
 from config import Session
 
 if TYPE_CHECKING:
+    from skills.manager import SkillsManager
     from tools.mcp.config import MCPConfig
 
 
@@ -35,6 +36,7 @@ class Runtime:
     session: Session
     builtin_args: BuiltinSystemPromptArgs
     mcp_config: MCPConfig | None = field(default=None)
+    skills_manager: SkillsManager | None = field(default=None)
     yolo: bool = field(default=False)
 
     def set_llm(self, llm: LLM | None) -> None:
@@ -59,6 +61,7 @@ class Runtime:
         llm: LLM | None,
         session: Session,
         mcp_config: MCPConfig | None = None,
+        skills_manager: SkillsManager | None = None,
         yolo: bool = False,
     ) -> Runtime:
         """Create a new runtime instance.
@@ -68,6 +71,7 @@ class Runtime:
             llm: Language model instance (optional).
             session: Current session.
             mcp_config: MCP configuration (optional).
+            skills_manager: Skills manager (optional).
             yolo: Whether to auto-approve all tool executions (optional).
 
         Returns:
@@ -78,6 +82,7 @@ class Runtime:
             llm=llm,
             session=session,
             mcp_config=mcp_config,
+            skills_manager=skills_manager,
             builtin_args=BuiltinSystemPromptArgs(
                 CLI_NOW=datetime.now().astimezone().isoformat(),
                 CLI_LANGUAGE=config.language,
