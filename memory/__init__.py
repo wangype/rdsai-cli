@@ -7,11 +7,13 @@ from memory.storage import (
     create_memory_storage,
     default_memory_db_path,
 )
+from memory.manager import MemoryManager
 from memory.types import ConversationMemoryRecord, MemoryStatus, QueryMemoryRecord, SessionCheckpoint
 
 __all__ = [
     "ConversationMemoryRecord",
     "InMemoryMemoryStorage",
+    "MemoryManager",
     "MemoryStatus",
     "MemoryStorageError",
     "QueryMemoryRecord",
