@@ -58,6 +58,11 @@ class MemoryManager:
                 last_queries = [entry.to_dict() for entry in query_history.get_recent_queries(5)]
             except Exception as exc:
                 logger.debug("Failed to collect query history for memory checkpoint: {error}", error=exc)
+        else:
+            try:
+                last_queries = [entry.to_dict() for entry in self.storage.get_recent_queries(5)]
+            except Exception as exc:
+                logger.debug("Failed to collect persisted query history for memory checkpoint: {error}", error=exc)
 
         self.save_checkpoint(
             database_connection=connection_info,

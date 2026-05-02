@@ -243,6 +243,8 @@ class ShellREPL:
                     # Not SQL, route to LLM
                     await self._run_loop_command(user_input.content)
         finally:
+            if isinstance(self.loop, NeoLoop):
+                self.loop.memory_manager.save_current_context(self._query_history)
             # Clear current REPL instance on exit
             self._set_current(None)
             self._prompt_session = None
@@ -547,6 +549,9 @@ class ShellREPL:
             else:
                 error_msg = str(error) if error else "Unknown error"
                 self._query_history.record_query(sql, "error", error_message=error_msg)
+
+        if isinstance(self.loop, NeoLoop):
+            self.loop.memory_manager.save_current_context(self._query_history)
 
     def _handle_transaction_control(self, tx_type: Any) -> None:
         """Handle transaction control statements (BEGIN/COMMIT/ROLLBACK)."""

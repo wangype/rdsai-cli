@@ -8,10 +8,12 @@ This module implements a layered context injection strategy:
 Context Types:
 - DATABASE: Database connection information (host, port, user, current database)
 - QUERY: Recent SQL execution results
+- MEMORY: Cross-session memory from previous sessions
 
 Injection Strategies:
 - DATABASE: Full connection info first time, reminder afterwards
 - QUERY: Content-hash based deduplication (skip if unchanged)
+- MEMORY: Content-hash based deduplication (skip if unchanged)
 """
 
 from __future__ import annotations
@@ -21,6 +23,7 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Optional
 
+from memory import MemoryManager
 from utils.logging import logger
 
 
@@ -39,12 +42,14 @@ class ContextType(Enum):
 
     DATABASE = auto()  # Database connection info (highest priority in Layer 2)
     QUERY = auto()  # Recent SQL query results
+    MEMORY = auto()  # Cross-session persistent memory
 
 
 # Default XML-like tags for each context type
 CONTEXT_TAGS: dict[ContextType, str] = {
     ContextType.DATABASE: "database_context",
     ContextType.QUERY: "query_context",
+    ContextType.MEMORY: "memory_context",
 }
 
 
@@ -195,10 +200,11 @@ class ContextManager:
         manager.reset_session()
     """
 
-    def __init__(self):
+    def __init__(self, memory_manager: MemoryManager | None = None):
         """Initialize the context manager."""
         self._entries: dict[ContextType, ContextEntry] = {}
         self._session = SessionState()
+        self._memory_manager = memory_manager
 
     # =========================================================================
     # Layer Management - Add/Update/Remove/Get
@@ -291,6 +297,10 @@ class ContextManager:
         """
         return self.add(ContextType.QUERY, content)
 
+    def set_memory_context(self, content: str) -> ContextManager:
+        """Set cross-session memory context."""
+        return self.add(ContextType.MEMORY, content, priority=-1)
+
     # =========================================================================
     # Session Management
     # =========================================================================
@@ -331,6 +341,7 @@ class ContextManager:
         # Autoload database connection info if not set and not yet injected
         # Also check if connection info has changed (e.g., user switched database)
         current_conn_info = _load_database_connection_info()
+        current_database = _load_current_database_name()
 
         if current_conn_info:
             # Check if connection info has changed
@@ -352,6 +363,13 @@ class ContextManager:
                 # Cache for future use
                 self._session.cache_content(ContextType.DATABASE, current_conn_info)
                 logger.debug("Database connection info loaded and cached")
+
+        if self._memory_manager:
+            memory_context = self._memory_manager.build_context(current_database=current_database)
+            if memory_context:
+                self.set_memory_context(memory_context)
+            else:
+                self.remove(ContextType.MEMORY)
 
         # Build output
         parts: list[str] = []
@@ -379,6 +397,11 @@ class ContextManager:
             elif context_type == ContextType.QUERY:
                 if not self._session.is_content_changed(ContextType.QUERY, entry.content):
                     # Content unchanged - skip injection
+                    continue
+
+            # MEMORY: Skip if content unchanged (deduplication)
+            elif context_type == ContextType.MEMORY:
+                if not self._session.is_content_changed(ContextType.MEMORY, entry.content):
                     continue
 
             parts.append(entry.format())
@@ -453,3 +476,13 @@ def _load_database_connection_info() -> Optional[str]:
         parts.append(f"Note: Use {engine.upper()} SQL syntax for queries.")
 
     return "\n".join(parts)
+
+
+def _load_current_database_name() -> Optional[str]:
+    """Load the current connected database name."""
+    from database.service import get_service
+
+    db_service = get_service()
+    if not db_service or not db_service.is_connected():
+        return None
+    return db_service.get_connection_info().get("database")

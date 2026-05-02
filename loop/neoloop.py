@@ -32,6 +32,7 @@ from loop.compaction import ChainCompaction
 from loop.context import ContextManager
 from loop.types import ContentPart
 from loop.runtime import Runtime
+from memory import MemoryManager
 from database import format_query_context_for_agent
 from database.service import get_service
 from utils.logging import logger
@@ -120,7 +121,8 @@ class NeoLoop(Loop):
         self._auto_approve_actions: set[str] = set()
 
         # Context manager for session-aware context injection
-        self._context_manager = ContextManager()
+        self._memory_manager = MemoryManager(session_id=self._runtime.session.id)
+        self._context_manager = ContextManager(memory_manager=self._memory_manager)
 
     @property
     def name(self) -> str:
@@ -154,6 +156,11 @@ class NeoLoop(Loop):
     def thread_id(self) -> str:
         """Get the current thread ID for checkpointing."""
         return self._thread_id
+
+    @property
+    def memory_manager(self) -> MemoryManager:
+        """Get the persistent memory manager for this loop."""
+        return self._memory_manager
 
     @property
     def toolset(self):
@@ -292,6 +299,7 @@ class NeoLoop(Loop):
                 else:
                     # Graph completed normally
                     logger.debug("Graph completed at step {step_no}", step_no=step_no)
+                    self._memory_manager.save_current_context()
                     break
 
             except asyncio.CancelledError:
