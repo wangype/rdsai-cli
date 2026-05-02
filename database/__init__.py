@@ -78,6 +78,7 @@ from .service import (
 
 # History
 from .history import (
+    PersistentQueryHistory,
     QueryHistory,
     QueryHistoryEntry,
 )
@@ -149,6 +150,7 @@ __all__ = [
     # History
     "QueryHistory",
     "QueryHistoryEntry",
+    "PersistentQueryHistory",
     # Schema exploration
     "ColumnInfo",
     "DatabaseExplorer",

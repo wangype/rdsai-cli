@@ -29,7 +29,7 @@ from .types import (
 )
 from .client import DatabaseClient, DatabaseClientFactory, TransactionState, validate_identifier
 from .errors import ConnectionError, DatabaseError, handle_database_error
-from .history import QueryHistory
+from .history import PersistentQueryHistory
 from utils.logging import logger
 
 if TYPE_CHECKING:
@@ -1157,7 +1157,7 @@ def create_connection_context(
     )
 
     db_service = DatabaseService()
-    query_history = QueryHistory(max_entries=100)
+    query_history = PersistentQueryHistory(max_entries=100)
 
     try:
         db_service.connect(connection_config)
@@ -1304,7 +1304,7 @@ def create_duckdb_connection_context(url: str | list[str]) -> ConnectionContext:
     from .duckdb_client import DuckDBClient
 
     db_service = DatabaseService()
-    query_history = QueryHistory(max_entries=100)
+    query_history = PersistentQueryHistory(max_entries=100)
 
     # Normalize input to list
     urls: list[str] = [url] if isinstance(url, str) else url
