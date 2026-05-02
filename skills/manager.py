@@ -29,6 +29,7 @@ class SkillsManager:
         self._user_dir = user_dir or (get_share_dir() / "skills")
         self._project_dir = project_dir or (Path.cwd() / ".rdsai-skills")
         self._skills: dict[str, SkillSpec] = {}
+        self._discovered: bool = False  # track whether discovery has been attempted
 
     @property
     def config(self) -> Config:
@@ -53,6 +54,7 @@ class SkillsManager:
                     )
                 skills[skill.name] = skill
         self._skills = skills
+        self._discovered = True
         return self.list_all()
 
     def enable(self, skill_name: str) -> None:
@@ -113,7 +115,7 @@ class SkillsManager:
         return skills
 
     def _ensure_discovered(self) -> None:
-        if not self._skills:
+        if not self._discovered:
             self.discover_all()
 
     def _save(self) -> None:
